@@ -1,18 +1,19 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from "@google/genai";
 
-// Initialize the Gemini client
-// Note: Ensure GEMINI_API_KEY is set in your .env.local file
-const ai = new GoogleGenAI({ apiKey: "AIzaSyDGv1vy5DqP0DPR9lP7D279d2HQ4oUW7Y0" });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export interface AnalysisResult {
-  verdict: 'Highly Recommended' | 'Wait for Sale' | 'Not for You' | 'Neutral';
+  verdict: "Highly Recommended" | "Wait for Sale" | "Not for You" | "Neutral";
   summary: string;
   pros: string[];
   cons: string[];
   sentiment: string;
 }
 
-export async function analyzeProduct(productData: any, userConstraints: string): Promise<AnalysisResult> {
+export async function analyzeProduct(
+  productData: any,
+  userConstraints: string,
+): Promise<AnalysisResult> {
   const prompt = `
     You are an expert personalized e-commerce shopping agent. 
     Analyze the following product data against the user's specific constraints.
@@ -42,30 +43,37 @@ export async function analyzeProduct(productData: any, userConstraints: string):
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: "gemini-2.5-flash",
     contents: prompt,
     config: {
-      responseMimeType: 'application/json',
-    }
+      responseMimeType: "application/json",
+    },
   });
 
-  const text = response.text || '{}';
+  const text = response.text || "{}";
 
   // Parse JSON from text, handling potential markdown wrappers and illegal control characters
   const cleanedText = text
-    .replace(/```json\n?|\n?```/g, '')
-    .replace(/[\n\r\t]+/g, ' ')
+    .replace(/```json\n?|\n?```/g, "")
+    .replace(/[\n\r\t]+/g, " ")
     .trim();
 
   try {
     return JSON.parse(cleanedText) as AnalysisResult;
   } catch (e) {
-    console.error("Failed to parse Gemini response as JSON. Cleaned text:", cleanedText);
-    throw new Error('Failed to parse AI response');
+    console.error(
+      "Failed to parse Gemini response as JSON. Cleaned text:",
+      cleanedText,
+    );
+    throw new Error("Failed to parse AI response");
   }
 }
 
-export async function compareProducts(product1Data: any, product2Data: any, userConstraints: string) {
+export async function compareProducts(
+  product1Data: any,
+  product2Data: any,
+  userConstraints: string,
+) {
   const prompt = `
     You are an expert personalized e-commerce shopping agent. 
     Compare the following two products against the user's specific constraints.
@@ -100,23 +108,26 @@ export async function compareProducts(product1Data: any, product2Data: any, user
   `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: "gemini-2.5-flash",
     contents: prompt,
     config: {
-      responseMimeType: 'application/json',
-    }
+      responseMimeType: "application/json",
+    },
   });
 
-  const text = response.text || '{}';
+  const text = response.text || "{}";
   const cleanedText = text
-    .replace(/```json\n?|\n?```/g, '')
-    .replace(/[\n\r\t]+/g, ' ')
+    .replace(/```json\n?|\n?```/g, "")
+    .replace(/[\n\r\t]+/g, " ")
     .trim();
 
   try {
     return JSON.parse(cleanedText);
   } catch (e) {
-    console.error("Failed to parse Gemini response as JSON. Cleaned text:", cleanedText);
-    throw new Error('Failed to parse AI response');
+    console.error(
+      "Failed to parse Gemini response as JSON. Cleaned text:",
+      cleanedText,
+    );
+    throw new Error("Failed to parse AI response");
   }
 }
